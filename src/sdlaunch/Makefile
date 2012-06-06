@@ -10,13 +10,10 @@ LINK          = g++
 LFLAGS        = -Wl,--hash-style=gnu -Wl,--as-needed -Wl,-O1
 STRIP         = strip
 
-SD_INC        =
-SD_LIB        = -lsystemd-daemon
-
 BPO_INC       =
 BPO_LIB       = -lboost_program_options
 
-INCPATH = $(SD_INC) $(BPO_INC)
+INCPATH = $(BPO_INC)
 ####### Build rules
 
 all: $(TARGET)
@@ -26,7 +23,7 @@ launch.o: launch.cpp config.h itoa.h HostPort.h
 
 $(TARGET): launch.o
 	mkdir -p ../../bin
-	$(LINK) $(LFLAGS) -o $(TARGET) launch.o $(SD_LIB) $(BPO_LIB) -pthread
+	$(LINK) $(LFLAGS) -o $(TARGET) launch.o $(BPO_LIB) -pthread
 	$(STRIP) $(TARGET)
 
 clean:

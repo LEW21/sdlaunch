@@ -6,7 +6,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <sys/socket.h>
-#include <systemd/sd-daemon.h>
+//#include <systemd/sd-daemon.h>
+#define SD_LISTEN_FDS_START 3
 #include <unistd.h>
 
 #ifdef SDLAUNCH_SOCKET_UNIX
