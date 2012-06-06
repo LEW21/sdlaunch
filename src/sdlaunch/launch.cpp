@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <boost/program_options.hpp>
+#include <fstream>
 #include <iostream>
 #include "itoa.h"
 #include <sstream>
@@ -102,8 +103,23 @@ void setupFDs(const std::vector<std::string>& uris)
 			perror("sdlaunch");
 	}
 
-	setenv("LISTEN_PID", itoa(getpid()), 1);
 	setenv("LISTEN_FDS", itoa(uris.size()), 1);
+}
+
+void daemonize(std::ostream& pidfile)
+{
+	pid_t pid = fork();
+
+	if (pid < 0)
+		throw std::runtime_error("Can't fork.");
+
+	if (pid > 0)
+	{
+		pidfile << int(pid) << std::endl;
+		exit(0);
+	}
+
+	setsid();
 }
 
 void execute(const std::vector<std::string>& args)
@@ -120,13 +136,20 @@ void execute(const std::vector<std::string>& args)
 
 int main(int argc, char** argv)
 {
+	bool help;
+
 	std::vector<std::string> uris;
 	std::vector<std::string> args;
 
+	bool daemonize;
+	std::string pidfile;
+
 	po::options_description desc("Options");
 	desc.add_options()
-		("help,h", "produce help message")
+		("help,h", po::value<bool>(&help)->zero_tokens(), "produce help message")
 		("bind,b", po::value<std::vector<std::string>>(&uris), "bind location (local path or ip:port)")
+		("daemonize,d", po::value<bool>(&daemonize)->zero_tokens(), "daemonize (run in background)")
+		("pid,p", po::value<std::string>(&pidfile), "save pid to file (only when daemonizing)")
 	;
 
 	po::options_description hidden("Hidden options");
@@ -145,14 +168,29 @@ int main(int argc, char** argv)
 			options(cmdline_options).positional(p).run(), vm);
 	po::notify(vm);
 
-	if (vm.count("help"))
+	if (help)
 	{
 		std::cout << "Usage: " << argv[0] << " [options] [command] [arg]+" << std::endl;
 		std::cout << desc << std::endl;
+		return 0;
+	}
+
+	if (args.empty())
+	{
+		std::cout << "Usage: " << argv[0] << " [options] [command] [arg]+" << std::endl;
 		return 1;
 	}
 
 	setupFDs(uris);
+
+	if (daemonize)
+	{
+		std::ofstream pf(pidfile);
+		::daemonize(pf);
+	}
+
+	setenv("LISTEN_PID", itoa(getpid()), 1);
+
 	execute(args);
 
 	perror("sdlaunch");
