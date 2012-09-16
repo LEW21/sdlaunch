@@ -136,12 +136,12 @@ void execute(const std::vector<std::string>& args)
 
 int main(int argc, char** argv)
 {
-	bool help;
+	bool help = false;
 
 	std::vector<std::string> uris;
 	std::vector<std::string> args;
 
-	bool daemonize;
+	bool daemonize = false;
 	std::string pidfile;
 
 	po::options_description desc("Options");
